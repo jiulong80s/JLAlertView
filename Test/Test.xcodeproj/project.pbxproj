@@ -13,7 +13,7 @@
 		A10223F91C758B9D00DC7335 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A10223F71C758B9D00DC7335 /* Main.storyboard */; };
 		A10223FB1C758B9E00DC7335 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10223FA1C758B9E00DC7335 /* Assets.xcassets */; };
 		A10223FE1C758B9E00DC7335 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A10223FC1C758B9E00DC7335 /* LaunchScreen.storyboard */; };
-		A10224071C758C0D00DC7335 /* JLAlertView.m in Sources */ = {isa = PBXBuildFile; fileRef = A10224061C758C0D00DC7335 /* JLAlertView.m */; };
+		A1BA4D301C7FEDB100AD652E /* JLAlertView.m in Sources */ = {isa = PBXBuildFile; fileRef = A1BA4D2F1C7FEDB100AD652E /* JLAlertView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,8 +27,8 @@
 		A10223FA1C758B9E00DC7335 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A10223FD1C758B9E00DC7335 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A10223FF1C758B9E00DC7335 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A10224051C758C0D00DC7335 /* JLAlertView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JLAlertView.h; sourceTree = "<group>"; };
-		A10224061C758C0D00DC7335 /* JLAlertView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JLAlertView.m; sourceTree = "<group>"; };
+		A1BA4D2E1C7FEDB100AD652E /* JLAlertView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JLAlertView.h; sourceTree = "<group>"; };
+		A1BA4D2F1C7FEDB100AD652E /* JLAlertView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JLAlertView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,8 +65,8 @@
 				A10223F21C758B9D00DC7335 /* AppDelegate.m */,
 				A10223F41C758B9D00DC7335 /* ViewController.h */,
 				A10223F51C758B9D00DC7335 /* ViewController.m */,
-				A10224051C758C0D00DC7335 /* JLAlertView.h */,
-				A10224061C758C0D00DC7335 /* JLAlertView.m */,
+				A1BA4D2E1C7FEDB100AD652E /* JLAlertView.h */,
+				A1BA4D2F1C7FEDB100AD652E /* JLAlertView.m */,
 				A10223F71C758B9D00DC7335 /* Main.storyboard */,
 				A10223FA1C758B9E00DC7335 /* Assets.xcassets */,
 				A10223FC1C758B9E00DC7335 /* LaunchScreen.storyboard */,
@@ -155,7 +155,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10223F61C758B9D00DC7335 /* ViewController.m in Sources */,
-				A10224071C758C0D00DC7335 /* JLAlertView.m in Sources */,
+				A1BA4D301C7FEDB100AD652E /* JLAlertView.m in Sources */,
 				A10223F31C758B9D00DC7335 /* AppDelegate.m in Sources */,
 				A10223F01C758B9D00DC7335 /* main.m in Sources */,
 			);
@@ -304,6 +304,7 @@
 				A10224041C758B9E00DC7335 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

@@ -1,14 +1,30 @@
-//
-//  JLAlertView.h
-//  Test
-//
-//  Created by 周九龙 on 16/2/18.
-//  Copyright © 2016年 Carlos. All rights reserved.
+
+//  Created by ChenHao on 2/11/15.
+//  Modified by Zhou jiulong 2/19/16
+//  Copyright (c) 2015 xxTeam. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
 
 @protocol JLAlertViewDelegate;
+
+typedef NS_ENUM(NSInteger, JLAlertEnterMode){
+    JLAlertEnterModeFadeIn,
+    JLAlertEnterModeTop,
+    JLAlertEnterModeBottom,
+    JLAlertEnterModeLeft,
+    JLAlertEnterModeRight,
+};
+
+typedef NS_ENUM(NSInteger, JLAlertLeaveMode){
+    JLAlertLeaveModeFadeOut,
+    JLAlertLeaveModeTop,
+    JLAlertLeaveModeBottom,
+    JLAlertLeaveModeLeft,
+    JLAlertLeaveModeRight,
+    
+};
+#if NS_BLOCKS_AVAILABLE
 
 /**
  *  the block to tell user whitch button is clicked
@@ -16,6 +32,8 @@
  *  @param button button
  */
 typedef void (^selectButtonIndexComplete)(NSInteger index);
+
+#endif
 
 @interface JLAlertView : UIView
 
@@ -32,7 +50,10 @@ typedef void (^selectButtonIndexComplete)(NSInteger index);
  *  @return instance of alertview
  */
 - (instancetype)initWithTitle:(NSString *)title
-				   message:(nullable NSString *)message delegate:(nullable id)delegate cancelButtonTitle:(nullable NSString *)cancelButtonTitle otherButtonTitles:(nullable NSString *)otherButtonTitles, ...;
+                   detailText:(NSString *)detailtext
+				   customView:(UIView *)customView
+            cancelButtonTitle:(NSString *)cancelButtonTitle
+            otherButtonTitles:(NSArray  *)otherButtonsTitles;
 
 
 /**
@@ -46,7 +67,7 @@ typedef void (^selectButtonIndexComplete)(NSInteger index);
  */
 - (void)show;
 
-
+#if NS_BLOCKS_AVAILABLE
 /**
  *  show method with block to konw which button clicked
  *
@@ -54,11 +75,26 @@ typedef void (^selectButtonIndexComplete)(NSInteger index);
  */
 - (void)showWithBlock:(selectButtonIndexComplete)completeBlock;
 
+#endif
 
 @property (nonatomic, weak)   id<JLAlertViewDelegate> delegate;
 
+#if NS_BLOCKS_AVAILABLE
+
 @property (nonatomic, copy)   selectButtonIndexComplete completeBlock;
 
+#endif
+
+@property (nonatomic, strong) UIColor *buttonBackgroundColor;
+@property (nonatomic, strong) UIColor *buttonTitleColor;
+
+/**
+ *  HHAlertView style mode
+ */
+ 
+@property (nonatomic, assign) JLAlertEnterMode enterMode;
+
+@property (nonatomic, assign) JLAlertLeaveMode leaveMode;
 
 /**
  * An optional short message to be displayed on the title label.
@@ -71,7 +107,7 @@ typedef void (^selectButtonIndexComplete)(NSInteger index);
  * An optional details message displayed below the titleText message.
  * property is also set and is different from an empty string (@""). The details text can span multiple lines.
  */
-@property (nonatomic, copy)   NSString *message;
+@property (nonatomic, copy)   NSString *detailText;
 
 /**
  * The UIView (e.g., a UIImageView) to be shown when the AlertView is in HHAlertViewModeCustom.
@@ -118,10 +154,16 @@ typedef void (^selectButtonIndexComplete)(NSInteger index);
 @end
 
 
+
 @protocol JLAlertViewDelegate <NSObject>
 
 @optional
-// Called when a button is clicked. The view will be automatically dismissed after this call returns
-- (void)alertView:(JLAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex;
+/**
+ *  the delegate to tell user whitch button is clicked
+ *
+ *  @param button button
+ */
+- (void)JLAlertView:(JLAlertView *)alertview didClickButtonAnIndex:(NSInteger )buttonIndex;
 
 @end
+
