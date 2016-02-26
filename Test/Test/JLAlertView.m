@@ -1,410 +1,440 @@
-//
-//  JLAlertView.m
-//  Test
-//
-//  Created by 周九龙 on 16/2/18.
-//  Copyright © 2016年 Carlos. All rights reserved.
+
+//  Created by ChenHao on 2/11/15.
+//  Modified by Zhou jiulong 2/19/16
+
+//  Copyright (c) 2015 xxTeam. All rights reserved.
 //
 
 #import "JLAlertView.h"
+
+
+static const CGFloat KDefaultRadius = 5.0;
+static const CGFloat KHHAlertView_Width      = 270;
+static const CGFloat KHHAlertView_Height      = 200;
+static const CGFloat KHHAlertView_Padding     = 10;
+static const NSInteger KbuttonTag = 18888;
+
 @interface JLAlertView()
 
 @property (nonatomic, strong) UILabel  *titleLabel;
-@property (nonatomic, strong) UILabel  *messageLabel;
+@property (nonatomic, strong) UILabel  *detailLabel;
 @property (nonatomic, strong) UIButton *cancelButton;
 @property (nonatomic, strong) NSArray  *otherButtons;
 
-@property (nonatomic, strong) UIView	*maskView;
-@property (nonatomic, strong) UIView	*mainAlertView;
-@property (nonatomic, strong) UIWindow   *alertWindow;
+@property (nonatomic, strong) UIView   *maskView;
+@property (nonatomic, strong) UIView   *mainAlertView; //main alert view
+
 @end
+
 
 @implementation JLAlertView
 
-#define OKBUTTON_BACKGROUND_COLOR [UIColor colorWithRed:158/255.0 green:214/255.0 blue:243/255.0 alpha:1]
-#define CANCELBUTTON_BACKGROUND_COLOR [UIColor colorWithRed:255/255.0 green:20/255.0 blue:20/255.0 alpha:1]
-
-static const CGFloat KHHAlertView_Width      = 260;
-static const CGFloat KHHAlertView_Height      = 300;
-static const CGFloat KHHAlertView_Padding     = 10;
-static const CGFloat KDefaultRadius = 5.0;
-
-static const NSInteger KbuttonTag = 18888;
-
 #pragma mark Lifecycle
 - (instancetype)initWithFrame:(CGRect)frame {
-	self = [super initWithFrame:frame];
-	if (self) {
-		self.xOffset = 0.0;
-		self.yOffset = 0.0;
-		self.radius  = KDefaultRadius;
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.xOffset = 0.0;
+        self.yOffset = 0.0;
+        self.radius  = KDefaultRadius;
 		self.alpha   = 0.0;
-		self.removeFromSuperViewOnHide = YES;
-		[self registerKVC];
+        self.removeFromSuperViewOnHide = YES;
 		
-	}
-	return self;
+    }
+    return self;
 }
 
 
-- (instancetype)initWithTitle:(NSString *)title message:(nullable NSString *)message delegate:(nullable id)delegate cancelButtonTitle:(nullable NSString *)cancelButtonTitle otherButtonTitles:(nullable NSString *)otherButtonTitles, ...
-{
-	
-	self = [self initWithFrame:[[UIScreen mainScreen] bounds]];
-	if (self) {
-		self.titleText = title;
-		self.message = message;
-		self.cancelButtonTitle = cancelButtonTitle;
-		va_list arguments;
-		id eachButtonTitle;
-		if (otherButtonTitles) {
-			NSMutableArray *buttonTitles = [NSMutableArray array];
-			va_start(arguments, otherButtonTitles);
-			[buttonTitles addObject:otherButtonTitles];
-			while ((eachButtonTitle = va_arg(arguments, id))) {
-				[buttonTitles addObject:(NSString *)eachButtonTitle];
-			}
-			va_end(arguments);
-			self.otherButtonTitles = buttonTitles;
-		}
-	}
-	return self;
+- (instancetype)initWithTitle:(NSString *)title
+                   detailText:(NSString *)detailtext
+				   customView:(UIView *)customView
+            cancelButtonTitle:(NSString *)cancelButtonTitle
+            otherButtonTitles:(NSArray *)otherButtonsTitles {
+    
+    self = [self initWithFrame:[[UIScreen mainScreen] bounds]];
+    if (self) {
+        self.titleText = title;
+        self.detailText = detailtext;
+		self.customView = customView;
+        self.cancelButtonTitle = cancelButtonTitle;
+        self.otherButtonTitles = otherButtonsTitles;
+        [self layout];
+        
+    }
+    return self;
 }
 
 
 #pragma mark UI
 
 - (void)addView {
-	[self addSubview:self.maskView];
-	[self addSubview:self.mainAlertView];
+    [self addSubview:self.maskView];
+    [self addSubview:self.mainAlertView];
 	[self.mainAlertView addSubview:self.titleLabel];
-	[self.mainAlertView addSubview:self.messageLabel];
+    [self.mainAlertView addSubview:self.detailLabel];
+	[self.mainAlertView addSubview:self.customView];
 }
 
 - (void)setupLabel {
-	[self.titleLabel setText:self.titleText];
-	[self.titleLabel sizeToFit];
-	[self.messageLabel setText:self.message];
-	[self.messageLabel setTextColor:[UIColor grayColor]];
-	[self.messageLabel setFont:[UIFont systemFontOfSize:14]];
-	[self.messageLabel setNumberOfLines:0];
+    [self.titleLabel setText:self.titleText];
+	self.titleLabel.font = [UIFont boldSystemFontOfSize:14];
+    [self.titleLabel sizeToFit];
+    [self.detailLabel setText:self.detailText];
+    [self.detailLabel setTextColor:[UIColor blackColor]];
+    [self.detailLabel setFont:[UIFont systemFontOfSize:13]];
+    [self.detailLabel setNumberOfLines:0];
 }
 
 - (void)setupButton {
-	if (self.cancelButtonTitle == nil && self.otherButtonTitles ==nil) {
-		NSAssert(NO, @"error");
-	}
-	
-	if (self.cancelButtonTitle != nil) {
-		self.cancelButton = [[UIButton alloc] init];
-		[self.cancelButton setTitle:self.cancelButtonTitle forState:UIControlStateNormal];
-		[self.cancelButton setTag:KbuttonTag];
-		[self.cancelButton addTarget:self action:@selector(buttonTouch:) forControlEvents:UIControlEventTouchUpInside];
-		[[self.cancelButton layer] setCornerRadius:4.0];
-		[[self.cancelButton layer] setBorderWidth:1.0];
-		[self.mainAlertView addSubview:self.cancelButton];
-	}
-	
-	if (self.otherButtonTitles != nil) {
-		NSMutableArray *tempButtonArray = [[NSMutableArray alloc] init];
-		NSInteger i = 1;
-		for (NSString *title in self.otherButtonTitles) {
-			
-			UIButton *button = [[UIButton alloc] init];
-			[button setTitle:title forState:UIControlStateNormal];
-			[button setTag:KbuttonTag + i];
-			[button addTarget:self action:@selector(buttonTouch:) forControlEvents:UIControlEventTouchUpInside];
-			[[button layer] setCornerRadius:4.0];
-			
-			[tempButtonArray addObject:button];
-			[self.mainAlertView addSubview:button];
-			i++;
-		}
-		self.otherButtons = [tempButtonArray copy];
-	}
+    if (self.cancelButtonTitle == nil && self.otherButtonTitles ==nil) {
+        NSAssert(NO, @"error");
+    }
+    
+    if (self.cancelButtonTitle != nil) {
+        self.cancelButton = [[UIButton alloc] init];
+        [self.cancelButton setTitle:self.cancelButtonTitle forState:UIControlStateNormal];
+		[self.cancelButton setTitleColor:[UIColor colorWithRed:43/250.0 green:125/250.0 blue:1 alpha:1] forState:UIControlStateNormal];
+		[self.cancelButton setBackgroundColor:[UIColor clearColor]];
+		[self.cancelButton setBackgroundImage:[JLAlertView createImageWithColor:[UIColor colorWithRed:230/250.0 green:230/250.0 blue:230/250.0 alpha:1.0]] forState:UIControlStateHighlighted];
+		[self.cancelButton setBackgroundImage:[JLAlertView createImageWithColor:[UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:1.0]] forState:UIControlStateNormal];
+
+        [self.cancelButton setTag:KbuttonTag];
+        [self.cancelButton addTarget:self action:@selector(buttonTouch:) forControlEvents:UIControlEventTouchUpInside];
+        [[self.cancelButton layer] setCornerRadius:5.0];
+        [self.mainAlertView addSubview:self.cancelButton];
+    }
+    
+    if (self.otherButtonTitles != nil) {
+        NSMutableArray *tempButtonArray = [[NSMutableArray alloc] init];
+        NSInteger i = 1;
+        for (NSString *title in self.otherButtonTitles) {
+            
+            UIButton *button = [[UIButton alloc] init];
+            [button setTitle:title forState:UIControlStateNormal];
+			[button setTitleColor:[UIColor colorWithRed:43/250.0 green:125/250.0 blue:1 alpha:1] forState:UIControlStateNormal];
+			[button setBackgroundColor:[UIColor clearColor]];
+			[button setBackgroundImage:[JLAlertView createImageWithColor:[UIColor colorWithRed:230/250.0 green:230/250.0 blue:230/250.0 alpha:1.0]] forState:UIControlStateHighlighted];
+			[button setBackgroundImage:[JLAlertView createImageWithColor:[UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:1.0]] forState:UIControlStateNormal];
+            [button setTag:KbuttonTag + i];
+            [button addTarget:self action:@selector(buttonTouch:) forControlEvents:UIControlEventTouchUpInside];
+            [[button layer] setCornerRadius:5.0];
+            [tempButtonArray addObject:button];
+            [self.mainAlertView addSubview:button];
+            i++;
+        }
+        self.otherButtons = [tempButtonArray copy];
+    }
 }
 
 #pragma mark Layout
 
 - (void)layout {
-	[self addView];
-	[self setupLabel];
-	[self setupButton];
-	NSArray* windows = [UIApplication sharedApplication].windows;
-	UIView *window = [windows objectAtIndex:0];
-	[window addSubview:self];
+    [self addView];
+    [self setupLabel];
+    [self setupButton];
+     NSArray* windows = [UIApplication sharedApplication].windows;
+    UIWindow *window = [windows objectAtIndex:0];
+    [window addSubview:self];
 }
 
 
 - (void)layoutSubviews {
-	[super layoutSubviews];
+    [super layoutSubviews];
+	CGFloat sumHeight = 0.0;
+    [self.mainAlertView setBackgroundColor:[UIColor whiteColor]];
+    [[self.mainAlertView layer] setCornerRadius:self.radius];
 	
-	[self.mainAlertView setBackgroundColor:[UIColor whiteColor]];
-	[[self.mainAlertView layer] setCornerRadius:self.radius];
-
-	//titleLabel frame
-	CGPoint titleCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, 20+CGRectGetHeight(self.titleLabel.frame)/2);
-	[self.titleLabel setCenter:titleCenter];
+    //titleLabel frame
+    CGPoint titleCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, 20+CGRectGetHeight(self.titleLabel.frame)/2);
+    [self.titleLabel setCenter:titleCenter];
+    
+    //detailLabel frame
+    [self.detailLabel setFrame:CGRectMake(0, 0, CGRectGetWidth(self.mainAlertView.frame)-KHHAlertView_Padding*2, 0)];
+    [self.detailLabel sizeToFit];
 	
-	//detailLabel frame
-	[self.detailLabel setFrame:CGRectMake(0, 0, CGRectGetWidth(self.mainAlertView.frame)-KHHAlertView_Padding*2, 0)];
-	[self.detailLabel sizeToFit];
 	
-	CGPoint detailCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, 10+CGRectGetHeight(self.detailLabel.frame)/2 + CGRectGetMaxY(self.titleLabel.frame));
-	[self.detailLabel setCenter:detailCenter];
+    CGPoint detailCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, 10+CGRectGetHeight(self.detailLabel.frame)/2 + CGRectGetMaxY(self.titleLabel.frame));
+    [self.detailLabel setCenter:detailCenter];
 	
-	if (self.cancelButtonTitle != nil && self.otherButtonTitles ==nil){
-		CGRect buttonFrame = CGRectMake(0, 0, KHHAlertView_Width - KHHAlertView_Padding *2, 40);
-		[self.cancelButton setFrame:buttonFrame];
-		
-		CGPoint buttonCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, KHHAlertView_Height - KHHAlertView_Padding - 20);
-		[self.cancelButton setCenter:buttonCenter];
-	}
 	
-	if (self.cancelButtonTitle != nil && [self.otherButtonTitles count]==1) {
-		CGRect buttonFrame = CGRectMake(0, 0, (KHHAlertView_Width - KHHAlertView_Padding *3)/2, 40);
-		[self.cancelButton setFrame:buttonFrame];
-		
-		CGPoint leftButtonCenter = CGPointMake(CGRectGetWidth(self.cancelButton.frame)/2 + KHHAlertView_Padding, KHHAlertView_Height - KHHAlertView_Padding - 20);
-		[self.cancelButton setCenter:leftButtonCenter];
-		
-		UIButton *rightButton = (UIButton *)self.otherButtons[0];
-		[rightButton setFrame:buttonFrame];
-		
-		CGPoint rightButtonCenter = CGPointMake(KHHAlertView_Width - CGRectGetWidth(rightButton.frame)/2 - KHHAlertView_Padding, KHHAlertView_Height - KHHAlertView_Padding - 20);
-		[rightButton setCenter:rightButtonCenter];
-		
-	}
-	if (self.cancelButtonTitle != nil && [self.otherButtonTitles count]>1) {
-		
-		CGRect buttonFrame = CGRectMake(0, 0, KHHAlertView_Width - KHHAlertView_Padding *2, 40);
-		
-		for (NSInteger i = self.otherButtons.count-1; i>=0; i--) {
-			UIButton *button = (UIButton *)self.otherButtons[i];
-			[button setFrame:buttonFrame];
-			
-			CGPoint pointCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, CGRectGetHeight(self.mainAlertView.frame) - KHHAlertView_Padding - 10 *(self.otherButtons.count-i-1)- 40 *(self.otherButtons.count-i)+20);
-			[button setCenter:pointCenter];
+	//customView frame
+	if (self.customView) {
+		CGFloat width = CGRectGetWidth(self.customView.frame);
+		CGFloat height = CGRectGetHeight(self.customView.frame);
+		if (width>=KHHAlertView_Width) {
+			width = KHHAlertView_Width-4;
 		}
-		
-		[self.cancelButton setFrame:buttonFrame];
-		
-		CGPoint leftButtonCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, CGRectGetHeight(self.mainAlertView.frame) - KHHAlertView_Padding - 10 *(self.otherButtons.count) - 40 * (self.otherButtons.count)-20);
-		[self.cancelButton setCenter:leftButtonCenter];
-		
-		NSLog(@"%f",CGRectGetMaxY(self.detailLabel.frame));
-		//adjust
-		if ((50 * (self.otherButtons.count+1) + CGRectGetMaxY(self.detailLabel.frame))>CGRectGetHeight(self.mainAlertView.frame)) {
-			
-			CGRect frame = self.mainAlertView.frame;
-			frame.size.height = 50 * (self.otherButtons.count+1) + CGRectGetMaxY(self.detailLabel.frame);
-			self.mainAlertView.frame = frame;
-			[self setNeedsLayout];
-			
+		if (self.customView.frame.size.height>350) {
+			height = 350;
 		}
-		
+		[self.customView setFrame:CGRectMake(CGRectGetMinX(self.customView.frame), CGRectGetMinY(self.customView.frame), width, height)];
+		CGPoint customCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, 10+CGRectGetHeight(self.customView.frame)/2 + CGRectGetMaxY(self.detailLabel.frame) );
+		[self.customView setCenter:customCenter];
+		sumHeight = CGRectGetMaxY(self.customView.frame)+20;
+	}else{
+		sumHeight = CGRectGetMaxY(self.detailLabel.frame)+20;
 	}
+	
+    if (self.cancelButtonTitle != nil && self.otherButtonTitles ==nil){
+        CGRect buttonFrame = CGRectMake(0, 0, KHHAlertView_Width, 40);
+        [self.cancelButton setFrame:buttonFrame];
+        
+        CGPoint buttonCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, sumHeight + CGRectGetHeight(self.cancelButton.frame)/2);
+        [self.cancelButton setCenter:buttonCenter];
+		sumHeight += KHHAlertView_Padding+CGRectGetHeight(self.cancelButton.frame);
+		[self setLine:CGRectMake(0, self.cancelButton.frame.origin.y, KHHAlertView_Width, 1)];
+    }
+    
+    if (self.cancelButtonTitle != nil && [self.otherButtonTitles count]==1) {
+        CGRect buttonFrame = CGRectMake(0, 0, KHHAlertView_Width /2, 40);
+        [self.cancelButton setFrame:buttonFrame];
+        
+        CGPoint leftButtonCenter = CGPointMake(CGRectGetWidth(self.cancelButton.frame)/2, sumHeight + CGRectGetHeight(self.cancelButton.frame)/2);
+        [self.cancelButton setCenter:leftButtonCenter];
+        
+        UIButton *rightButton = (UIButton *)self.otherButtons[0];
+        [rightButton setFrame:buttonFrame];
+        
+        CGPoint rightButtonCenter = CGPointMake(KHHAlertView_Width*3/4, sumHeight + CGRectGetHeight(self.cancelButton.frame)/2);
+        [rightButton setCenter:rightButtonCenter];
+		
+		sumHeight +=CGRectGetHeight(self.cancelButton.frame);
+ 		[self setLine:CGRectMake(0, self.cancelButton.frame.origin.y, KHHAlertView_Width, 1)];
+		[self setLine:CGRectMake(KHHAlertView_Width/2, self.cancelButton.frame.origin.y, 1, 40)];
+    }
 	if (self.cancelButtonTitle == nil && [self.otherButtonTitles count]==1) {
 		
 		UIButton *rightButton = (UIButton *)self.otherButtons[0];
-		CGRect buttonFrame = CGRectMake(0, 0, KHHAlertView_Width - KHHAlertView_Padding *2, 40);
+		CGRect buttonFrame = CGRectMake(0, 0, KHHAlertView_Width, 40);
 		[rightButton setFrame:buttonFrame];
 		
-		CGPoint buttonCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, KHHAlertView_Height - KHHAlertView_Padding - 20);
+		CGPoint buttonCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, sumHeight + 40/2);
 		[rightButton setCenter:buttonCenter];
-		
+		sumHeight += 40;
+		[self setLine:CGRectMake(0, rightButton.frame.origin.y, KHHAlertView_Width, 1)];
+
 	}
-	
+    if (self.cancelButtonTitle != nil && [self.otherButtonTitles count]>1) {
+        
+        CGRect buttonFrame = CGRectMake(0, 0, KHHAlertView_Width, 40);
+        
+        for (NSInteger i = self.otherButtons.count-1; i>=0; i--) {
+            UIButton *button = (UIButton *)self.otherButtons[i];
+            [button setFrame:buttonFrame];
+            
+            CGPoint pointCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, sumHeight + 40/2);
+            [button setCenter:pointCenter];
+			sumHeight += 40;
+			[self setLine:CGRectMake(0, button.frame.origin.y, KHHAlertView_Width, 1)];
+        }
+
+        [self.cancelButton setFrame:buttonFrame];
+        
+        CGPoint leftButtonCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, sumHeight+20);
+        [self.cancelButton setCenter:leftButtonCenter];
+		[self setLine:CGRectMake(0, self.cancelButton.frame.origin.y, KHHAlertView_Width, 1)];
+		sumHeight += 40;
+    }
+	sumHeight +=2;
+	CGRect frame = CGRectMake(CGRectGetMinX(self.mainAlertView.frame), CGRectGetMinY(self.mainAlertView.frame), KHHAlertView_Width, sumHeight);
+	self.mainAlertView.frame = frame;
+	UIWindow *window = [[UIApplication sharedApplication].windows objectAtIndex:0];
+	[self.mainAlertView setCenter:window.center];
+
 }
 
 #pragma mark Event Response
 
 - (void)buttonTouch:(UIButton *)button {
-	if (self.completeBlock) {
-		self.completeBlock(button.tag - KbuttonTag);
-	}
-	
-	if (self.delegate && [self.delegate respondsToSelector:@selector(HHAlertView:didClickButtonAnIndex:)]) {
-		[self.delegate HHAlertView:self didClickButtonAnIndex:button.tag - KbuttonTag];
-	}
-	[self hide];
+    if (self.completeBlock) {
+        self.completeBlock(button.tag - KbuttonTag);
+    }
+    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(JLAlertView:didClickButtonAnIndex:)]) {
+        [self.delegate JLAlertView:self didClickButtonAnIndex:button.tag - KbuttonTag];
+    }
+    [self hide];
 }
 
 
-#pragma mark show & hide
+#pragma mark show & hide 
 
 - (void)show {
-	NSTimeInterval interval = 0.3;
-	CGRect frame = self.mainAlertView.frame;
-	if (self.enterMode) {
-		switch (self.enterMode) {
-			case HHAlertEnterModeTop:
-			{
-				frame.origin.y -= CGRectGetHeight([[UIScreen mainScreen] bounds]);
-				interval = 0.5;
-			}
-				break;
-			case HHAlertEnterModeBottom:
-			{
-				frame.origin.y += CGRectGetHeight([[UIScreen mainScreen] bounds]);
-				interval = 0.5;
-			}
-				break;
-			case HHAlertEnterModeLeft:
-			{
-				frame.origin.x -= CGRectGetWidth([[UIScreen mainScreen] bounds]);
-				interval = 0.5;
-			}
-				break;
-			case HHAlertEnterModeRight:
-			{
-				frame.origin.x += CGRectGetWidth([[UIScreen mainScreen] bounds]);
-				interval = 0.5;
-			}
-				break;
-			case HHAlertEnterModeFadeIn:
-			{
-				
-			}
-				break;
-				
-			default:
-				break;
-		}
-	}
-	[self.mainAlertView setFrame:frame];
-	[UIView animateWithDuration:interval animations:^{
-		[self setAlpha:1];
-		[self.mainAlertView setCenter:CGPointMake([[UIScreen mainScreen] bounds].size.width/2, [[UIScreen mainScreen] bounds].size.height/2)];
-	} completion:^(BOOL finished) {
-		
-	}];
+    NSTimeInterval interval = 0.3;
+    CGRect frame = self.mainAlertView.frame;
+    if (self.enterMode) {
+        switch (self.enterMode) {
+            case JLAlertEnterModeTop:
+            {
+                frame.origin.y -= CGRectGetHeight([[UIScreen mainScreen] bounds]);
+                interval = 0.5;
+            }
+                break;
+            case JLAlertEnterModeBottom:
+            {
+                frame.origin.y += CGRectGetHeight([[UIScreen mainScreen] bounds]);
+                interval = 0.5;
+            }
+                break;
+            case JLAlertEnterModeLeft:
+            {
+                frame.origin.x -= CGRectGetWidth([[UIScreen mainScreen] bounds]);
+                interval = 0.5;
+            }
+                break;
+            case JLAlertEnterModeRight:
+            {
+                frame.origin.x += CGRectGetWidth([[UIScreen mainScreen] bounds]);
+                interval = 0.5;
+            }
+                break;
+            case JLAlertEnterModeFadeIn:
+            {
+           
+            }
+                break;
+            
+            default:
+                break;
+        }
+    }
+    [self.mainAlertView setFrame:frame];
+    [UIView animateWithDuration:interval animations:^{
+        [self setAlpha:1];
+        [self.mainAlertView setCenter:CGPointMake([[UIScreen mainScreen] bounds].size.width/2, [[UIScreen mainScreen] bounds].size.height/2)];
+    } completion:^(BOOL finished) {
+        
+    }];
 }
 
 - (void)showWithBlock:(selectButtonIndexComplete)completeBlock {
-	self.completeBlock = completeBlock;
-	[self show];
+    self.completeBlock = completeBlock;
+    [self show];
 }
 
 - (void)hide {
-	NSTimeInterval interval = 0.3;
-	CGRect frame = self.mainAlertView.frame;
-	if (self.leaveMode) {
-		switch (self.leaveMode) {
-			case HHAlertLeaveModeTop:
-			{
-				frame.origin.y -= CGRectGetHeight([[UIScreen mainScreen] bounds]);
-				interval = 0.5;
-			}
-				break;
-			case HHAlertLeaveModeBottom:
-			{
-				frame.origin.y += CGRectGetHeight([[UIScreen mainScreen] bounds]);
-				interval = 0.5;
-			}
-				break;
-			case HHAlertLeaveModeLeft:
-			{
-				frame.origin.y -= CGRectGetWidth([[UIScreen mainScreen] bounds]);
-				interval = 0.5;
-			}
-				break;
-			case HHAlertLeaveModeRight:
-			{
-				frame.origin.x += CGRectGetWidth([[UIScreen mainScreen] bounds]);
-				interval = 0.5;
-			}
-				break;
-			case HHAlertLeaveModeFadeOut:
-			{
-				
-			}
-				break;
-				
-			default:
-				break;
-		}
-	}
+    NSTimeInterval interval = 0.3;
+    CGRect frame = self.mainAlertView.frame;
+    if (self.leaveMode) {
+        switch (self.leaveMode) {
+            case JLAlertLeaveModeTop:
+            {
+                frame.origin.y -= CGRectGetHeight([[UIScreen mainScreen] bounds]);
+                interval = 0.5;
+            }
+                break;
+            case JLAlertLeaveModeBottom:
+            {
+                frame.origin.y += CGRectGetHeight([[UIScreen mainScreen] bounds]);
+                interval = 0.5;
+            }
+                break;
+            case JLAlertLeaveModeLeft:
+            {
+                frame.origin.y -= CGRectGetWidth([[UIScreen mainScreen] bounds]);
+                interval = 0.5;
+            }
+                break;
+            case JLAlertLeaveModeRight:
+            {
+                frame.origin.x += CGRectGetWidth([[UIScreen mainScreen] bounds]);
+                interval = 0.5;
+            }
+                break;
+            case JLAlertLeaveModeFadeOut:
+            {
+                
+            }
+                break;
+                
+            default:
+                break;
+        }
+    }
  
-	[UIView animateWithDuration:interval animations:^{
-		[self setAlpha:0];
-		[self.mainAlertView setFrame:frame];
-	} completion:^(BOOL finished) {
-		if (self.removeFromSuperViewOnHide) {
-			[self removeFromSuperview];
-		}
-		[self unregisterKVC];
-	}];
+    [UIView animateWithDuration:interval animations:^{
+        [self setAlpha:0];
+        [self.mainAlertView setFrame:frame];
+    } completion:^(BOOL finished) {
+        if (self.removeFromSuperViewOnHide) {
+            [self removeFromSuperview];
+        }
+    }];
 }
 
-#pragma mark KVC
-
-- (void)registerKVC {
-	for (NSString *keypath in [self observableKeypaths]) {
-		[self addObserver:self forKeyPath:keypath options:NSKeyValueObservingOptionNew context:nil];
-	}
-}
-
-- (void)unregisterKVC {
-	for (NSString *keypath in [self observableKeypaths]) {
-		[self removeObserver:self forKeyPath:keypath];
-	}
-}
-
-- (NSArray *)observableKeypaths {
-	return [NSArray arrayWithObjects:@"mode",@"customView", nil];
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath
-					  ofObject:(id)object
-						change:(NSDictionary *)change
-					   context:(void *)context {
-	if (![NSThread isMainThread]) {
-		[self performSelectorOnMainThread:@selector(updateUIForKeypath:) withObject:keyPath waitUntilDone:NO];
-	}
-	else{
-		[self updateUIForKeypath:keyPath];
-	}
-}
-
-- (void)updateUIForKeypath:(NSString *)keypath {
-	if ([keypath isEqualToString:@"mode"] || [keypath isEqualToString:@"customView"]) {
-		[self updateModeStyle];
-	}
-}
 
 #pragma mark getter and setter
 
 - (UIView *)maskView {
-	if (!_maskView) {
-		_maskView = [[UIView alloc] initWithFrame:self.bounds];
-		[_maskView setBackgroundColor:[UIColor blackColor]];
-		[_maskView setAlpha:0.2];
-	}
-	return _maskView;
+    if (!_maskView) {
+        _maskView = [[UIView alloc] initWithFrame:self.bounds];
+        [_maskView setBackgroundColor:[UIColor blackColor]];
+        [_maskView setAlpha:0.3];
+    }
+    return _maskView;
 }
 
 - (UIView *)mainAlertView {
-	if (!_mainAlertView) {
-		_mainAlertView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, KHHAlertView_Width, KHHAlertView_Height)];
-		[_mainAlertView setCenter:self.center];
-	}
-	return _mainAlertView;
+    if (!_mainAlertView) {
+        _mainAlertView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, KHHAlertView_Width, KHHAlertView_Height)];
+        [_mainAlertView setCenter:self.center];
+    }
+    return _mainAlertView;
 }
+
 
 - (UILabel *)titleLabel {
-	if (!_titleLabel) {
-		_titleLabel = [[UILabel alloc] init];
-	}
-	return _titleLabel;
+    if (!_titleLabel) {
+        _titleLabel = [[UILabel alloc] init];
+    }
+    return _titleLabel;
 }
 
-- (UILabel *)messageLabel {
-	if (!_messageLabel) {
-		_messageLabel = [[UILabel alloc] init];
-	}
-	return _messageLabel;
+- (UILabel *)detailLabel {
+    if (!_detailLabel) {
+        _detailLabel = [[UILabel alloc] init];
+    }
+    return _detailLabel;
+}
+- (void)setLine:(CGRect)frame
+{
+	UIView *line = [[UIView alloc] initWithFrame:frame];
+	line.backgroundColor = [UIColor colorWithRed:219/250.0 green:219/250.0 blue:223/250.0 alpha:1.0];
+	[self.mainAlertView addSubview:line];
 }
 
+- (void)setButtonTitleColor:(UIColor *)buttonTitleColor
+{
+	_buttonTitleColor = buttonTitleColor;
+	if (self.cancelButton) {
+		[self.cancelButton setTitleColor:buttonTitleColor forState:UIControlStateNormal];
+	}
+	for (UIButton *button in self.otherButtons) {
+		[button setTitleColor:buttonTitleColor forState:UIControlStateNormal];
+	}
+}
+
+- (void)setButtonBackgroundColor:(UIColor *)buttonBackgroundColor
+{
+	_buttonBackgroundColor = buttonBackgroundColor;
+	if (self.cancelButton) {
+		[self.cancelButton setBackgroundColor:buttonBackgroundColor];
+	}
+	for (UIButton *button in self.otherButtons) {
+		[button setBackgroundColor:buttonBackgroundColor];
+	}
+}
+
++ (UIImage *)createImageWithColor:(UIColor *)color
+{
+	CGRect rect=CGRectMake(0.0f, 0.0f, 1.0f, 1.0f);
+	UIGraphicsBeginImageContext(rect.size);
+	CGContextRef context = UIGraphicsGetCurrentContext();
+	CGContextSetFillColorWithColor(context, [color CGColor]);
+	CGContextFillRect(context, rect);
+	
+	UIImage *theImage = UIGraphicsGetImageFromCurrentImageContext();
+	UIGraphicsEndImageContext();
+	return theImage; 
+}
 
 @end
