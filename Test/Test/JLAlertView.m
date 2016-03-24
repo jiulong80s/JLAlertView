@@ -178,28 +178,31 @@ static const NSInteger KbuttonTag = 18888;
         CGRect buttonFrame = CGRectMake(0, 0, KHHAlertView_Width, 40);
         [self.cancelButton setFrame:buttonFrame];
         
-        CGPoint buttonCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, sumHeight + CGRectGetHeight(self.cancelButton.frame)/2);
+        CGPoint buttonCenter = CGPointMake(CGRectGetWidth(self.mainAlertView.frame)/2, sumHeight + CGRectGetHeight(self.cancelButton.frame)/2+1);
         [self.cancelButton setCenter:buttonCenter];
-		sumHeight += KHHAlertView_Padding+CGRectGetHeight(self.cancelButton.frame);
+		sumHeight += CGRectGetHeight(self.cancelButton.frame);
 		[self setLine:CGRectMake(0, self.cancelButton.frame.origin.y, KHHAlertView_Width, 1)];
+		[JLAlertView drawCornerForView:self.cancelButton withRoundingCorners:UIRectCornerBottomLeft | UIRectCornerBottomRight];
     }
     
     if (self.cancelButtonTitle != nil && [self.otherButtonTitles count]==1) {
         CGRect buttonFrame = CGRectMake(0, 0, KHHAlertView_Width /2, 40);
         [self.cancelButton setFrame:buttonFrame];
         
-        CGPoint leftButtonCenter = CGPointMake(CGRectGetWidth(self.cancelButton.frame)/2, sumHeight + CGRectGetHeight(self.cancelButton.frame)/2);
+        CGPoint leftButtonCenter = CGPointMake(CGRectGetWidth(self.cancelButton.frame)/2, sumHeight + CGRectGetHeight(self.cancelButton.frame)/2+1);
         [self.cancelButton setCenter:leftButtonCenter];
         
         UIButton *rightButton = (UIButton *)self.otherButtons[0];
         [rightButton setFrame:buttonFrame];
         
-        CGPoint rightButtonCenter = CGPointMake(KHHAlertView_Width*3/4, sumHeight + CGRectGetHeight(self.cancelButton.frame)/2);
+        CGPoint rightButtonCenter = CGPointMake(KHHAlertView_Width*3/4, sumHeight + CGRectGetHeight(self.cancelButton.frame)/2+1);
         [rightButton setCenter:rightButtonCenter];
 		
 		sumHeight +=CGRectGetHeight(self.cancelButton.frame);
  		[self setLine:CGRectMake(0, self.cancelButton.frame.origin.y, KHHAlertView_Width, 1)];
 		[self setLine:CGRectMake(KHHAlertView_Width/2, self.cancelButton.frame.origin.y, 1, 40)];
+		[JLAlertView drawCornerForView:self.cancelButton withRoundingCorners:UIRectCornerBottomLeft ];
+		[JLAlertView drawCornerForView:rightButton withRoundingCorners:UIRectCornerBottomRight];
     }
 	if (self.cancelButtonTitle == nil && [self.otherButtonTitles count]==1) {
 		
@@ -211,7 +214,7 @@ static const NSInteger KbuttonTag = 18888;
 		[rightButton setCenter:buttonCenter];
 		sumHeight += 40;
 		[self setLine:CGRectMake(0, rightButton.frame.origin.y, KHHAlertView_Width, 1)];
-
+		[JLAlertView drawCornerForView:rightButton withRoundingCorners:UIRectCornerBottomLeft | UIRectCornerBottomRight];
 	}
     if (self.cancelButtonTitle != nil && [self.otherButtonTitles count]>1) {
         
@@ -233,6 +236,7 @@ static const NSInteger KbuttonTag = 18888;
         [self.cancelButton setCenter:leftButtonCenter];
 		[self setLine:CGRectMake(0, self.cancelButton.frame.origin.y, KHHAlertView_Width, 1)];
 		sumHeight += 40;
+		[JLAlertView drawCornerForView:self.cancelButton withRoundingCorners:UIRectCornerBottomLeft | UIRectCornerBottomRight];
     }
 	sumHeight +=2;
 	CGRect frame = CGRectMake(CGRectGetMinX(self.mainAlertView.frame), CGRectGetMinY(self.mainAlertView.frame), KHHAlertView_Width, sumHeight);
@@ -436,5 +440,12 @@ static const NSInteger KbuttonTag = 18888;
 	UIGraphicsEndImageContext();
 	return theImage; 
 }
-
++ (void)drawCornerForView:(UIView*)view withRoundingCorners:(UIRectCorner)corners
+{
+	UIBezierPath *maskPath = [UIBezierPath bezierPathWithRoundedRect:view.bounds byRoundingCorners:corners cornerRadii:CGSizeMake(8, 8)];
+	CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
+	maskLayer.frame = view.bounds;
+	maskLayer.path = maskPath.CGPath;
+	view.layer.mask = maskLayer;
+}
 @end
