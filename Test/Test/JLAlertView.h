@@ -87,7 +87,8 @@ typedef void (^selectButtonIndexComplete)(NSInteger index);
 
 @property (nonatomic, strong) UIColor *buttonBackgroundColor;
 @property (nonatomic, strong) UIColor *buttonTitleColor;
-
+@property (nonatomic, strong) UIColor *cancelButtonTitleColor;
+@property (nonatomic, strong) NSArray *otherButtonsTitleColor;
 /**
  *  HHAlertView style mode
  */

@@ -78,10 +78,13 @@ static const NSInteger KbuttonTag = 18888;
     [self.titleLabel setText:self.titleText];
 	self.titleLabel.font = [UIFont boldSystemFontOfSize:14];
     [self.titleLabel sizeToFit];
+	[self.titleLabel setTextAlignment:NSTextAlignmentCenter];
     [self.detailLabel setText:self.detailText];
     [self.detailLabel setTextColor:[UIColor blackColor]];
     [self.detailLabel setFont:[UIFont systemFontOfSize:13]];
     [self.detailLabel setNumberOfLines:0];
+	[self.detailLabel setTextAlignment:NSTextAlignmentCenter];
+
 }
 
 - (void)setupButton {
@@ -425,6 +428,18 @@ static const NSInteger KbuttonTag = 18888;
 	}
 	for (UIButton *button in self.otherButtons) {
 		[button setBackgroundColor:buttonBackgroundColor];
+	}
+}
+- (void)setCancelButtonTitleColor:(UIColor *)cancelButtonTitleColor
+{
+	[self.cancelButton setTitleColor:cancelButtonTitleColor forState:UIControlStateNormal];
+}
+
+- (void)setOtherButtonsTitleColor:(NSArray *)otherButtonsTitleColor
+{
+	for (UIButton *button in self.otherButtons) {
+		NSUInteger index = [self.otherButtons indexOfObject:button];
+		[button setTitleColor:otherButtonsTitleColor[index]  forState:UIControlStateNormal];
 	}
 }
 
